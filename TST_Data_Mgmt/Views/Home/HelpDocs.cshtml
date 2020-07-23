@@ -1,0 +1,8 @@
+﻿@{
+    ViewBag.Title = "FCS Documentation";
+}
+<h2>@ViewBag.Title</h2>
+<div>
+    <p class="text-muted">The document viewer will not work in IE. To view the help docs you will need to use Chrome or FireFox</p>
+</div>
+    <iframe src="@(ViewBag.docPath)" width='1024' height='768' id="frameDocument" allowfullscreen webkitallowfullscreen></iframe>

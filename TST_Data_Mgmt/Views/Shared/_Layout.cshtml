@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - TST Data Mgmt</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @Scripts.Render("~/bundles/jqwidgets")
+    @RenderSection("scripts", required: false)
+
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" runat="server" href="~/"><img src="~/images/nar_narsi_logo_scaled.png" alt="NARSI" width="214" height="29" /></a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li>@Html.ActionLink("Home", "Index", "Home")</li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Maintenance<b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>@Html.ActionLink("TST Invoices", "Index", "TSTInvoices")</li>
+                            <li>@Html.ActionLink("Daily Invoice Imports", "Index", "Last_Import_Invoice_Batch")</li>
+                            <li>@Html.ActionLink("TST Company Mgmt", "Index", "TST_Companies_With_Counts")</li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Commissions<b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>@Html.ActionLink("Commission - HR Paid Full Rpt", "HRPaidReport", "Commissions_HR_Paid")</li>
+                            <li>@Html.ActionLink("Commission - HR Paid Individual Rpt", "Index", "Commissions_HR_Paid")</li>
+                         </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Help Documents<b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>@Html.ActionLink("Export Process for Jobs", "HelpDocs", "Home", new { docname = "DailyExportProcess" }, null)</li>
+                            <li>@Html.ActionLink("Grid Help", "GridHelp", "Home", new { docname = "GridHelp" }, null)</li>
+                        </ul>
+                    </li>
+                </ul>
+                @Html.Partial("_LoginPartial")
+</div>
+        </div>
+    </div>
+    <div class="container body-content">
+        @RenderBody()
+        
+        <footer>
+            <p>&copy; @DateTime.Now.Year - TST Data Management and Reporting</p>
+        </footer>
+    </div>
+
+    
+</body>
+</html>

@@ -1,0 +1,21 @@
+﻿@model IEnumerable<TST_DataMgmt.Models.Commissions_HR_Paid_Summary>
+@using ReportViewerForMvc;
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>HR Paid Commissions Report</h2>
+<div>
+    <p class="text-muted">
+        The report is showing job invoices that have had commission payments applied based on the commission payment date. To change the date - select a new date by clicking the calendar icon and click the "view Report" button
+   </p>
+    <div class="clearfix"></div><br />
+    <p class="text-muted">You can export the report data in 3 formats: Excel, CSV, or PDF. Just click on the disk icon and select the type of export that you want. You can also print the report by clicking on the printer icon.</p>
+</div>
+<div>
+    @Html.ReportViewer(
+        ViewBag.ReportViewer as Microsoft.Reporting.WebForms.ReportViewer,
+        new { scrolling = "no" })
+
+
+</div>

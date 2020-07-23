@@ -1,0 +1,737 @@
+﻿@model IEnumerable<TST_DataMgmt.Models.Commissions_HR_Paid>
+
+@{
+    ViewBag.Title = "HRPaidReport";
+}
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            function trim(number, precision) {
+                var array = number.toString().split(".");
+                array.push(array.pop().substring(0, precision));
+                var trimmedNumber = array.join(".");
+                return trimmedNumber;
+            }
+
+            function select_preview_month() {
+                var now = new Date();
+                var currentMonth = now.getMonth();
+                var currentYear = now.getFullYear();
+
+                if (currentMonth == 0)
+                {
+                    currentMonth = 11;
+                    currentYear = currentYear - 1;
+                    sDate = new Date(currentYear, currentMonth, 1);
+                    eDate = new Date(currentYear, currentMonth + 1, 0);
+                }
+                else {
+                    sDate = new Date(currentYear, currentMonth - 1, 1);
+                    eDate = new Date(currentYear, currentMonth, 0);
+                }
+
+                return [sDate, eDate];
+            }
+            //set jqwidget theme
+            var theme = "bootstrap";
+
+            // create jqxcalendar.
+            $("#jqxWidget").jqxDateTimeInput({ width: 250, height: 25, selectionMode: 'range', formatString: 'MM/dd/yyyy' });
+
+            $("#jqxWidget").on('change', function (event) {
+                var selection = $("#jqxWidget").jqxDateTimeInput('getRange');
+                if (selection.from != null) {
+                    $("#selection").html("<div>&nbsp;&nbsp;Selected Dates From: " + selection.from.toLocaleDateString() + "  To: " + selection.to.toLocaleDateString() + "</div>");
+                }
+            });
+
+            var dateRange = select_preview_month();
+            var date1 = new Date(dateRange[0]);
+            var date2 = new Date(dateRange[1]);
+            $("#jqxWidget").jqxDateTimeInput('setRange', date1, date2);
+
+
+
+            //function call to set the source for the grid
+            function setGridSource() {
+                // prepare the data
+                var dateParams = $("#jqxWidget").jqxDateTimeInput('getRange');
+                var fDate = dateParams.from.toDateString();
+                var tDate = dateParams.to.toDateString();
+                var data = { 'fromDate': fDate, 'toDate': tDate };
+
+               var source =
+                    {
+                        dataType: "json",
+                        dataFields: [
+                            { name: 'COMMISSION_RECORD_ID', type: 'number' },
+                            { name: 'COMMISSION_ID', type: 'string' },
+                            { name: 'INVOICE_ID', type: 'string' },
+                            { name: 'INVOICE_TYPE', type: 'string' },
+                            { name: 'PROPERTY_NAME', type: 'string' },
+                            { name: 'BILL_TO_ACCOUNT_MANAGER', type: 'string' },
+                            { name: 'EMPLOYEE_ID', type: 'number' },
+                            { name: 'EMPLOYEE', type: 'string' },
+                            { name: 'EMPLOYEE_TYPE', type: 'string' },
+                            { name: 'INVOICE_TOTAL', type: 'number' },
+                            { name: 'CONTRACT_AMOUNT', type: 'number' },
+                            { name: 'REV_CONTRACT_AMOUNT', type: 'number' },
+                            { name: 'INVOICE_AMOUNT_PAID', type: 'number' },
+                            { name: 'INVOICE_PERCENTAGE_PAID', type: 'number' },
+                            { name: 'LAST_INVOICE_PAYMENT_DATE', type: 'date' },
+                            { name: 'COMMISSION_RATE', type: 'number' },
+                            { name: 'COMMISSION_RATE_TYPE', type: 'string' },
+                            { name: 'ALLOCATED_COMMISSION', type: 'number' },
+                            { name: 'COMMISSIONS_PAID', type: 'number' },
+                            { name: 'COMMISSION_PERCENT_PAID', type: 'number' },
+                            { name: 'LAST_COMMISSION_PAID_DATE', type: 'date' },
+                            { name: 'SVC_STATUS', type: 'string' },
+                            { name: 'SVC_STATUS_UPDATED_ON', type: 'date' },
+                            { name: 'INVOICE_DATE', type: 'date' },
+                            { name: 'INVOICE_STATUS', type: 'string' },
+                            { name: 'SVC_SALES_EMP_ID', type: 'number' },
+                            { name: 'SVC_SALES_EMPLOYEE', type: 'string' },
+                            { name: 'DISPATCH_DATE', type: 'date' },
+                            { name: 'ACCOUNT_TYPE', type: 'string' },
+                            { name: 'COMPANY_ID', type: 'string' },
+                            { name: 'NOTES', type: 'string' }
+                        ],
+                        id: 'COMMISSION_RECORD_ID',
+                       url: '/Commissions_HR_Paid/GetCommissionHRPaidGridReportDataByDate',
+                        data: data
+                        
+                    };
+
+               return source;
+            }
+
+
+            //Get the values for the Svc Status dropdown
+            var ddlDataSvcStatus = { 'OptionType': 'COMM_SVC_STATUS' };
+            var ddlSourceSvcStatus = {
+                dataType: "json",
+                dataFields: [
+                    { name: 'OptionText', type: 'string' },
+                    { name: 'OptionValue', type: 'string' }
+                ],
+                url: '/TST_OPTIONS/GetOptions',
+                data: ddlDataSvcStatus
+            };
+            var daSvcStatus = new $.jqx.dataAdapter(ddlSourceSvcStatus);
+
+            //Get the values for the company account type dropdown
+            var ddlDataAcctType = { 'OptionType': 'COMP_ACCT_TYPE' };
+            var ddlSourceAcctType = {
+                dataType: "json",
+                dataFields: [
+                    { name: 'OptionText', type: 'string' },
+                    { name: 'OptionValue', type: 'string' }
+                ],
+                url: '/TST_OPTIONS/GetOptions',
+                data: ddlDataAcctType
+            };
+            var daAcctType = new $.jqx.dataAdapter(ddlSourceAcctType);
+
+            //Get the values for the svc sales rep dropdown
+            var ddlDataSales = { 'OptionType': 'SALES' };
+            var ddlSourceSales = {
+                dataType: "json",
+                dataFields: [
+                    { name: 'OptionText', type: 'string' },
+                    { name: 'OptionValue', type: 'string' }
+                ],
+                url: '/TST_OPTIONS/GetOptions',
+                data: ddlDataSvcSales
+            };
+            var daSales = new $.jqx.dataAdapter(ddlSourceSales);
+
+            //Get the values for the Commission Rate Type
+            var ddlDataCommRateType = { 'OptionType': 'COMM_RATE_TYPE' };
+            var ddlSourceCommRateType = {
+                dataType: "json",
+                dataFields: [
+                    { name: 'OptionText', type: 'string' },
+                    { name: 'OptionValue', type: 'string' }
+                ],
+                url: '/TST_OPTIONS/GetOptions',
+                data: ddlDataCommRateType
+            };
+            var daCommRateType = new $.jqx.dataAdapter(ddlSourceCommRateType);
+
+            // initialize the input fields.
+            $("#COMMISSION_RECORD_ID").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true });
+            $("#INVOICE_ID").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true  });
+            $("#COMPANY_ID").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true });
+            $("#EMPLOYEE").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true });
+            $("#EMPLOYEE_TYPE").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true });
+            $("#SVC_STATUS").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true});
+            $("#ACCOUNT_TYPE").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true});
+            $("#COMMISSION_RATE_TYPE").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true });
+            $("#COMMISSIONS_PAID").jqxInput({ theme: theme, width: "110px", height: "23px", disabled: true });
+
+            //set the textarea input
+            $("#NOTES").jqxTextArea({ theme: theme, width: 300, height: 75, placeHolder: 'Enter Notes', minLength: 1, disabled: true });
+            $("#NEW_NOTE").jqxTextArea({ theme: theme, width: 300, height: 75, placeHolder: 'Enter Notes', minLength: 1 });
+
+            //set number inputs
+            $("#COMMISSION_PAYMENT").jqxNumberInput({ theme: theme,  symbol: "$", digits: 8, width: "110px", height: "23px" });
+            $("#INV_TOTAL_SUBJECT_TO_COMMISSION").jqxNumberInput({ theme: theme, decimal: 2, symbol: "$", digits: 8, width: "110px", height: "23px", disabled: true });
+            $("#ALLOCATED_COMMISSION").jqxNumberInput({ theme: theme, symbol: "$", digits: 8, width: "110px", height: "23px", disabled: true });
+            $("#COMMISSION_RATE").jqxNumberInput({ theme: theme, width: "100px", height: "23px", readOnly: true, disabled: true});
+
+            //set datetime inputs
+            $("#COMMISSION_PAYMENT_DATE").jqxDateTimeInput({ theme: theme, formatString: 'MM/dd/yyyy', width: "110px", height: "23px" });
+
+            //set checkbox inputs
+            $("#cbxPayAllocated").jqxCheckBox({ theme: theme, width: 100, height: 23, boxSize: '10px',});
+            $('#cbxPayAllocated').on('change', function (event) {
+                var isChecked = $('#cbxPayAllocated').val();
+                if (isChecked) {
+                    var allocatedamt = $("#ALLOCATED_COMMISSION").val();
+                    $("#COMMISSION_PAYMENT").val(allocatedamt);
+                }
+                else {
+
+                    $("#COMMISSION_PAYMENT").val(0);
+                }
+            });
+
+
+            var linkrenderer = function (row, column, value) {
+                if (value.indexOf('#') != -1) {
+                    value = value.substring(0, value.indexOf('#'));
+                }
+                var format = { target: '"_blank"' };
+
+                var title = "<div style='text-align: center; margin: 10px 0px 0px 15px;'><img src='/content/images/Actions-document-open-remote-icon.png' /><span style='padding-top:20px;'> View</span></div>";
+                var button = "<div style='margin: 10px 0px 0px 15px;'><a class='buttonValue' target='_blank' href='" + value + "'>" + title + "</a></div>";
+
+                return button;
+            }
+
+            //used to format summary of Total column and Hours column on grid
+            var sumTotal;
+            var sumHours;
+
+            var groupsrenderer = function (text, group, expanded, data) {
+                var text = data.groupcolumn.text + ': ' + group;
+                if (data.subItems.length > 0) {
+                    var aggregate = this.getcolumnaggregateddata('TOTAL', ['sum'], true, data.subItems);
+                } else {
+                    var rows = new Array();
+                    var getRows = function (group, rows) {
+                        if (group.subGroups.length > 0) {
+                            for (var i = 0; i < group.subGroups.length; i++) {
+                                getRows(group.subGroups[i], rows);
+                            }
+                        } else {
+                            for (var i = 0; i < group.subItems.length; i++) {
+                                rows.push(group.subItems[i]);
+                            }
+                        }
+                    }
+                    getRows(data, rows);
+                    var aggregate = this.getcolumnaggregateddata('TOTAL', ['sum'], true, rows);
+                }
+
+                return '<div class="' + 'jqx-grid-groups-row .jqx-grid-groups-row-narsi' + '" style="position: absolute;"><span>' + text + ' - </span>' + '<span class="' + 'jqx-grid-groups-row-details jqx-grid-groups-row-details-narsi' + '">' + "Total" + ': $' + aggregate.sum + '' + '</span></div>';
+            }
+
+            var cellclassname = function (row, column, value, data) {
+                if (data.GL_CODE == '2') {
+                    return "beigeClass";
+                } else if (data.GL_CODE == '5') {
+                    return "cyanClass";
+                }
+                else {
+                    return 'ltredClass';
+                }
+            };
+
+            var gridSource = setGridSource();
+            var dataAdapter = new $.jqx.dataAdapter(gridSource);
+            // create Tree Grid
+            $("#grid").jqxGrid(
+                {
+                    width: 1700,
+                    height: 600,
+                    pageable: true,
+                    pageSize: 25,
+                    filterable: true,
+                    filtermode: 'excel',
+                    source: dataAdapter,
+                    autorowheight: false,
+                    autoheight: false,
+                    sortable: true,
+                    showfilterrow: false,
+                    selectionmode: 'none',
+                    altrows: true,
+                    scrollmode: 'logical',
+                    enabletooltips: true,
+                    enableellipsis: true,
+                    autoshowfiltericon: true,
+                    columnsresize: true,
+                    showstatusbar: true,
+                    statusbarheight: 40,
+                    showaggregates: true,
+                    showtoolbar: true,
+                    toolbarheight: 40,
+                    columnsheight: 40,
+                    rowsheight: 55,
+                    enabletooltips: true,
+                    enableellipsis: true,
+                    groupable: true,
+                    columns: [
+                        {
+                            text: 'COMMISSION_RECORD_ID', dataField: 'COMMISSION_RECORD_ID', width: 10, hidden: true
+                        },
+                        {
+                            text: 'COMMISSION_ID', dataField: 'COMMISSION_ID', width: 10, hidden: true
+                        },
+                        {
+                            text: 'EMPLOYEE_ID', dataField: 'EMPLOYEE_ID', width: 10, hidden: true
+                        },
+                        {
+                            text: 'SVC_SALES_EMP_ID', dataField: 'SVC_SALES_EMP_ID', width: 10, hidden: true
+                        },
+                        {
+                            text: 'COMPANY_ID', dataField: 'COMPANY_ID', width: 10, hidden: true
+                        },
+                        {
+                            text: 'COMMISSION_PAYMENT', dataField: 'COMMISSION_PAYMENT', width: 10, hidden: true
+                        },
+                        {
+                            text: 'COMMISSION_PAYMENT_DATE', dataField: 'COMMISSION_PAYMENT_DATE', width: 10, hidden: true
+                        },
+                        {
+                            text: 'NOTES', dataField: 'NOTES', width: 10, hidden: true
+                        },
+                        {
+                            text: 'Edit', datafield: 'Edit', columntype: 'button', cellsrenderer: function () {
+                                return "Edit";
+                            }, buttonclick: function (row) {
+                                // open the popup window when the user clicks a button.
+                                editrow = row;
+                                var offset = $("#grid").offset();
+                                $("#popupWindow").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60 } });
+
+                                // get the clicked row's data and initialize the input fields.
+                                var dataRecord = $("#grid").jqxGrid('getrowdata', editrow);
+                                $("#INVOICE_ID").val(dataRecord.INVOICE_ID);
+                                $("#COMMISSION_RECORD_ID").val(dataRecord.COMMISSION_RECORD_ID);
+                                $("#COMMISSION_RATE_TYPE").val(dataRecord.COMMISSION_RATE_TYPE);
+
+                                $("#COMMISSIONS_PAID").jqxNumberInput({ decimal: dataRecord.COMMISSIONS_PAID, symbol: "$", digits: 8, disabled: true, width: "100px" });
+
+                                if (dataRecord.COMMISSION_RATE_TYPE == 'FLAT') {
+                                    commRateSymbol = "$";
+                                    commRateSymbolPos = "left";
+                                }
+                                else {
+                                    commRateSymbol = "%";
+                                    commRateSymbolPos = "right";
+                                }
+                                $("#COMMISSION_RATE").jqxNumberInput({ decimal: dataRecord.COMMISSION_RATE, symbol: commRateSymbol, symbolPosition: commRateSymbolPos, digits: 3, spinButtons: false, disabled: true });
+                                $("#EMPLOYEE").val(dataRecord.EMPLOYEE);
+                                $("#EMPLOYEE_TYPE").val(dataRecord.EMPLOYEE_TYPE);
+                                $("#COMPANY_ID").val(dataRecord.COMPANY_ID);
+                                $("#ALLOCATED_COMMISSION").jqxNumberInput({ decimal: dataRecord.ALLOCATED_COMMISSION, symbol: "$", digits: 5, disabled: true });
+                                if (dataRecord.REV_CONTRACT_AMOUNT > 0){
+                                    $("#INV_TOTAL_SUBJECT_TO_COMMISSION").jqxNumberInput({ decimal: dataRecord.REV_CONTRACT_AMOUNT, symbol: "$", digits: 8, disabled: true, width: "100px" });
+                                }
+                                else {
+                                    $("#INV_TOTAL_SUBJECT_TO_COMMISSION").jqxNumberInput({ decimal: dataRecord.CONTRACT_AMOUNT, symbol: "$", digits: 8, disabled: true });
+                                }
+
+                                $("#SVC_STATUS").val(dataRecord.SVC_STATUS);
+                                $("#ACCOUNT_TYPE").val(dataRecord.ACCOUNT_TYPE);
+                                $("#COMMISSION_RATE_TYPE").val(dataRecord.COMMISSION_RATE_TYPE);
+                                $("#COMMISSION_PAYMENT").jqxNumberInput({ symbol: "$", digits: 8});
+                                $("#COMMISSION_PAYMENT_DATE").jqxDateTimeInput({ formatString: 'MM/dd/yyyy' });
+                                $("#NOTES").val(dataRecord.NOTES);
+                                $("#NEW_NOTE").val();
+
+                                $("textarea:disabled").css({
+                                    'background-color' : '#DCDCDC',
+                                    'color': '#0F0F0F'
+                                });
+                                $("input:disabled").css({
+                                    'background-color': '#DCDCDC',
+                                    'color': '#0F0F0F'
+                                });
+
+                                // show the popup window.
+                                $("#popupWindow").jqxWindow('open');
+                            }
+                        },
+                        {
+                            text: 'Comm Svc Status', dataField: 'SVC_STATUS', width: 80, filtertype: 'input', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Comm Svc<br>Status</div>';
+                            }
+                        },
+                        {
+                            text: 'Invoice Nbr', dataField: 'INVOICE_ID', width: 80, filtertype: 'input', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice #</div>';
+                            }
+                        },
+                        {
+                            text: 'Invoice Type', dataField: 'INVOICE_TYPE', width: 80, filtertype: 'input', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Type</div>';
+                            }
+                        },
+                        {
+                            text: 'Invoice Date', dataField: 'INVOICE_DATE', width: 80, filtertype: 'date', cellsformat: 'd', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Date</div>';
+                            }
+                        },
+                        {
+                            text: 'Employee Owed', dataField: 'EMPLOYEE', width: 150, filtertype: 'input', cellsalign: 'left', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Employee Owed<br>Commission</div>';
+                            }
+                        },
+                        {
+                            text: 'Employee Type', dataField: 'EMPLOYEE_TYPE', width: 80, filtertype: 'input', cellsalign: 'left', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Employee<br>Type</div>';
+                            }
+                        },
+                        {
+                            text: 'Allocated Commission', dataField: 'ALLOCATED_COMMISSION', width: 100, cellsformat: 'c2', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Allocated<br>Commission</div>';
+                            }
+                        },
+                        {
+                            text: 'Commission Paid', dataField: 'COMMISSIONS_PAID', width: 100, cellsformat: 'c2', cellsalign: 'right', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Commission<br>Paid</div>';
+                            }
+                        },
+                        {
+                            text: 'Commission % Paid', dataField: 'COMMISSION_PERCENT_PAID', width: 100, cellsformat: 'p3', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Commission<br>% Paid</div>';
+                            }
+                        },
+                        {
+                            text: 'Last Comm Paid Date', dataField: 'LAST_COMMISSION_PAID_DATE', width: 100, filtertype: 'date', cellsformat: 'd', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Last Comm<br>Paid Date</div>';
+                            }
+                        },
+                        {
+                            text: 'Contract Amount', dataField: 'CONTRACT_AMOUNT', width: 100, cellsformat: 'c2', cellsalign: 'right', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Contract<br>Amount</div>';
+                            }
+                        },
+                        {
+                            text: 'Rev Contract Amount', dataField: 'REV_CONTRACT_AMOUNT', width: 100, cellsformat: 'c2', cellsalign: 'right', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Rev.Contract<br>Amount</div>';
+                            }
+                        },
+                        {
+                            text: 'Invoice Amt Paid', dataField: 'INVOICE_AMOUNT_PAID', width: 100, cellsformat: 'c2', cellsalign: 'right', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Amt Paid</div>';
+                            }
+                        },
+                        {
+                            text: 'Invoice % Paid', dataField: 'INVOICE_PERCENTAGE_PAID', width: 100, cellsformat: 'p4', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>% Paid</div>';
+                            }
+                        },
+                        {
+                            text: 'Last Inv Paid Date', dataField: 'LAST_INVOICE_PAYMENT_DATE', width: 100, filtertype: 'date', cellsformat: 'd', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Last Inv<br>Paid Date</div>';
+                            }
+                        },
+                        {
+                            text: 'Commission Rate', dataField: 'COMMISSION_RATE', width: 100, cellsformat: 'd2', cellsalign: 'right', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Commission<br>Rate</div>';
+                            }
+                        },
+                        {
+                            text: 'Commission Rate Type', dataField: 'COMMISSION_RATE_TYPE', width: 100, filtertype: 'input', cellsalign: 'left', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Commission<br>Rate Type</div>';
+                            }
+                        },
+                        {
+                            text: 'Dispatch Date', dataField: 'DISPATCH_DATE', width: 100, filtertype: 'date', cellsformat: 'd', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Dispatch<br>Date</div>';
+                            }
+                        },
+                        {
+                            text: 'Invoice Total', dataField: 'INVOICE_TOTAL', width: 125, cellsformat: 'c2', cellsalign: 'right', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Total</div>';
+                            }
+                        },
+                        {
+                            text: 'Invoice Status', dataField: 'INVOICE_STATUS', width: 100, filtertype: 'input', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Status</div>';
+                            }
+                        },
+                        {
+                            text: 'Account Type', dataField: 'ACCOUNT_TYPE', width: 100, filtertype: 'input', cellsalign: 'center', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Account<br>Type</div>';
+                            }
+                        },
+                        {
+                            text: 'Property', dataField: 'PROPERTY_NAME', width: 200, filtertype: 'input', cellsalign: 'left', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Property<br>Name</div>';
+                            }
+                        },
+                        {
+                            text: 'Acct Mgr', dataField: 'BILL_TO_ACCOUNT_MANAGER', width: 150, filtertype: 'input', cellsalign: 'left', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Acct<br>Mgr</div>';
+                            }
+                        },
+                        {
+                            text: 'Svc Sales Rep', dataField: 'SVC_SALES_EMPLOYEE', width: 150, filtertype: 'input', cellsalign: 'left', groupable: true,
+                            renderer: function (defaultText, alignment, height) {
+                                return '<div style="text-align: center;margin: 3px 0 0 3px;">Service<br>Sales Rep</div>';
+                            }
+                        },
+
+                    ],
+                    rendertoolbar: function (statusbar) {
+                        // appends buttons to the status bar.
+                        var container = $("<div style='overflow: hidden; position: relative; margin: 5px;'></div>");
+                        var reloadButton = $("<div style='float: left; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/refresh.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Reload</span></div>");
+                        var clearFilterButton = $("<div style='float: left; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/filter-delete-icon.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Clear Filter</span></div>");
+                        var excelButton = $("<div style='float: right; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/excel-xls-icon.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Export to Excel</span></div>");
+                        var csvButton = $("<div style='float: right; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/csv-icon.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Export to CSV</span></div>");
+                        var pdfButton = $("<div style='float: right; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/pdf-icon.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Export to PDF</span></div>");
+
+                        container.append(reloadButton);
+                        container.append(clearFilterButton);
+                        container.append(pdfButton);
+                        container.append(csvButton);
+                        container.append(excelButton);
+
+                        statusbar.append(container);
+
+                        reloadButton.jqxButton({ width: 75, height: 20 });
+                        clearFilterButton.jqxButton({ width: 110, height: 20 });
+                        excelButton.jqxButton({ width: 125, height: 20 });
+                        csvButton.jqxButton({ width: 125, height: 20 });
+                        pdfButton.jqxButton({ width: 125, height: 20 });
+
+                        // reload grid data.
+                        reloadButton.click(function (event) {
+                            var sourcebyDate = setGridSource();
+
+                            var daReload = new $.jqx.dataAdapter(sourcebyDate);
+                            $('#grid').jqxGrid({ source: daReload });
+                            $("#jqxWidget").jqxDateTimeInput('setRange', date1, date2);
+                            $("#selection").html("<div></div>");
+                        });
+
+                        // Clear the filters
+                        clearFilterButton.click(function () {
+                            $("#grid").jqxGrid('clearfilters');
+                        });
+
+                        //export buttons
+                        excelButton.click(function () {
+                            $("#grid").jqxGrid('exportdata', 'xls', 'Commissions_HR_Paid_Report');
+                        });
+                        csvButton.click(function () {
+                            $("#grid").jqxGrid('exportdata', 'csv', 'Commissions_HR_Paid_Report');
+                        });
+                        pdfButton.click(function () {
+                            $("#grid").jqxGrid('exportdata', 'pdf', 'Commissions_HR_Paid_Report');
+                        });
+
+                    }
+                });
+
+            // initialize the popup window and buttons.
+            $("#popupWindow").jqxWindow({
+                width: 1000, resizable: false, isModal: true, autoOpen: false, cancelButton: $("#Cancel"), modalOpacity: 0.01
+            });
+
+
+            $("#Cancel").jqxButton({ theme: theme });
+            $("#Save").jqxButton({ theme: theme });
+
+            // update the edited row when the user clicks the 'Save' button.
+            $("#Save").click(function () {
+                if (editrow >= 0) {
+
+                    var commPaid = $("#COMMISSION_PAYMENT").val();
+                    var commPaidDate = $("#COMMISSION_PAYMENT_DATE").val();
+                    var newNote = $("#NEW_NOTE").val();
+                    var commAlreadyPaid = $("#COMMISSIONS_PAID").val();
+                    var commAlreadyPaidSum = commPaid + commAlreadyPaid
+                    var allocatedcomm = $("#ALLOCATED_COMMISSION").val();
+                    var commPaidPercent = (parseFloat(commAlreadyPaidSum.toFixed(2)) / parseFloat(allocatedcomm.toFixed(2))) * 100
+                    var origNotes = $("#NOTES").val();
+                    var mergedNotes = origNotes + " | " + newNote;
+
+                    if (parseFloat(commAlreadyPaidSum.toFixed(2)) > parseFloat(allocatedcomm.toFixed(2))) {
+                        alert('ERROR: Total commission payments would exceed the allocated commission amount!')
+                    }
+                    else {
+                        var dataRecord = $("#grid").jqxGrid('getrowdata', editrow);
+                        var row = {
+                            COMMISSION_RATE: dataRecord.COMMISSION_RATE,
+                            SVC_STATUS: dataRecord.SVC_STATUS,
+                            ACCOUNT_TYPE: dataRecord.ACCOUNT_TYPE,
+                            SVC_SALES_EMP_ID: dataRecord.SVC_SALES_EMP_ID,
+                            COMMISSION_RATE_TYPE: dataRecord.COMMISSION_RATE_TYPE,
+                            ALLOCATED_COMMISSION: dataRecord.ALLOCATED_COMMISSION,
+
+                            COMMISSION_RECORD_ID: dataRecord.COMMISSION_RECORD_ID,
+                            COMMISSION_ID: dataRecord.COMMISSION_ID,
+                            EMPLOYEE_ID: dataRecord.EMPLOYEE_ID,
+                            COMPANY_ID: dataRecord.COMPANY_ID,
+                            INVOICE_ID: dataRecord.INVOICE_ID,
+                            DISPATCH_DATE: dataRecord.DISPATCH_DATE,
+                            INVOICE_DATE: dataRecord.INVOICE_DATE,
+                            INVOICE_STATUS: dataRecord.INVOICE_STATUS,
+                            INVOICE_TYPE: dataRecord.INVOICE_TYPE,
+                            PROPERTY_NAME: dataRecord.PROPERTY_NAME,
+                            BILL_TO_ACCOUNT_MANAGER: dataRecord.BILL_TO_ACCOUNT_MANAGER,
+                            EMPLOYEE: dataRecord.EMPLOYEE,
+                            EMPLOYEE_TYPE: dataRecord.EMPLOYEE_TYPE,
+                            INVOICE_TOTAL: dataRecord.INVOICE_TOTAL,
+                            CONTRACT_AMOUNT: dataRecord.CONTRACT_AMOUNT,
+                            REV_CONTRACT_AMOUNT: dataRecord.REV_CONTRACT_AMOUNT,
+                            INVOICE_AMOUNT_PAID: dataRecord.INVOICE_AMOUNT_PAID,
+                            INVOICE_PERCENTAGE_PAID: dataRecord.INVOICE_PERCENTAGE_PAID,
+                            LAST_INVOICE_PAYMENT_DATE: dataRecord.LAST_INVOICE_PAYMENT_DATE,
+                            COMMISSIONS_PAID: commAlreadyPaidSum,
+                            COMMISSION_PERCENT_PAID: commPaidPercent,
+                            LAST_COMMISSION_PAID_DATE: dataRecord.LAST_COMMISSION_PAID_DATE,
+                            COMMISSION_PAYMENT: commPaid,
+                            COMMISSION_PAYMENT_DATE: commPaidDate,
+                            NOTES: mergedNotes
+                        };
+
+                        var rowID = $('#grid').jqxGrid('getrowid', editrow);
+                        console.log(row);
+                        $('#grid').jqxGrid('updaterow', rowID, row);
+                        $("#popupWindow").jqxWindow('hide');
+                    }
+                }
+            });
+
+            var cellclassname = function (row, column, value, data) {
+                if (data.INVOICE_TYPE == 'Snow') {
+                    return "beigeClass";
+                } else if (data.InvoiceType == 'RTM') {
+                    return "cyanClass";
+                }
+                else if (data.InvoiceType == 'Contract') {
+                    return "ltgrayClass";
+                }
+            };
+
+            $('#updatereportbutton').click(function () {
+                var selection = $("#jqxWidget").jqxDateTimeInput('getRange');
+                var sourcebyDate = setGridSource();
+
+                var dataAdapter = new $.jqx.dataAdapter(sourcebyDate);
+                $('#grid').jqxGrid({ source: dataAdapter });
+
+            });
+        });
+    </script>
+}
+<h2>HR Paid Job Commissions Report</h2>
+<div>
+    <p class="text-muted">
+        The report is showing job invoices that qualify for a commission payment and where the last commission payment date is during the previous month. To change the date range click on the calander icon and select a new date range then click the "Update Report" button
+        <div>
+            <div class="innerDiv" id='jqxWidget'></div>
+            <div class="innerDiv text-muted" id='selection'></div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="updatereportbutton">
+            Update Report
+        </button>
+    </p>
+    <div class="clearfix"></div><br />
+    <p class="text-muted">To sort and/or filter the report data hover over the column heading and click on the menu icon (<img src="~/Content/images/icon-menu-small.png" alt="menu" />) that displays. In the dropdown you can select your sort/filter options. If a column has a filter applied than a filter icon (<img src="~/Content/images/filter.png" alt="filter" />) will be displayed in the heading. You can also sort a column by clicking on the column header. To remove a specific filter from a column click on the menu icon again and select "Clear". You can also remove all filters by click on the "Clear Filter" button that is just above the grid.</p>
+    <p class="text-muted">You can export the report data in 3 formats: Excel, CSV, or PDF. Just click on the export button (just above the grid on the right) for the desired format. If you choose either Excel or CSV it is recommended that you do a "Save As" instead of just opening the download.</p>
+</div>
+<div id="grid"></div>
+<div id="popupWindow">
+    <div>Edit</div>
+    <div style="overflow: hidden;">
+        <table cellpadding="3" cellspacing="3">
+            <tr>
+                <td align="right">Record ID:</td>
+                <td align="left"><input id="COMMISSION_RECORD_ID" /></td>
+                <td align="right">Invoice ID:</td>
+                <td align="left"><input id="INVOICE_ID" readonly style="background-color:gainsboro;" /></td>
+                <td align="right">Comm Service Status:</td>
+                <td align="left"><input id="SVC_STATUS" readonly style="background-color:gainsboro;" /></td>
+            </tr>
+            <tr>
+                <td align="right">Employee Owed:</td>
+                <td align="left"><input id="EMPLOYEE" readonly style="background-color:gainsboro;" /></td>
+                <td align="right">Commission Rate Type:</td>
+                <td align="left"><input id="COMMISSION_RATE_TYPE" readonly style="background-color:gainsboro;" /></td>
+                <td align="right">Company ID:</td>
+                <td align="left"><input id="COMPANY_ID" readonly style="background-color:gainsboro;" /></td>
+            </tr>
+            <tr>
+                <td align="right">Employee Type:</td>
+                <td align="left"><input id="EMPLOYEE_TYPE" readonly style="background-color:gainsboro;" /></td>
+                <td align="right">Invoice Total:</td>
+                <td align="left"><input id="INV_TOTAL_SUBJECT_TO_COMMISSION" readonly style="background-color:gainsboro;" /></td>
+                <td align="right">Account Type:</td>
+                <td align="left"><input id="ACCOUNT_TYPE" readonly style="background-color:gainsboro;" /></td>
+            </tr>
+            <tr>
+                <td align="right">Commission Rate:</td>
+                <td align="left"><input id="COMMISSION_RATE" /></td>
+                <td align="right" valign="top" rowspan="3">Notes:</td>
+                <td align="left" valign="top" colspan="3" rowspan="3"><textarea id="NOTES" readonly style="background-color:gainsboro;"></textarea>
+            </tr>
+            <tr>
+                <td align="right">Allocated Commission:</td>
+                <td align="left"><input id="ALLOCATED_COMMISSION" readonly style="background-color:gainsboro;" /></td>
+            </tr>
+            <tr>
+                <td align="right">Commissions Already Paid:</td>
+                <td align="left"><input id="COMMISSIONS_PAID" readonly style="background-color:gainsboro;" /></td>
+            </tr>
+            <tr>
+                <td align="right">Commission Payment Amount:</td>
+                <td align="left"><input id="COMMISSION_PAYMENT" /></td>
+                <td align="right" valign="top">Add a New Note:</td>
+                <td align="left" valign="top" colspan="3" rowspan="3"><textarea id="NEW_NOTE"></textarea>
+            </tr>
+            <tr>
+                <td align="right" style="font-size:10px;font-style:italic;">Pay the remaining allocation commission</td>
+                <td align="right"><div id="cbxPayAllocated"></div></td>
+            </tr>
+            <tr>
+                <td align="right">Commission Payment Date:</td>
+                <td align="left"><input id="COMMISSION_PAYMENT_DATE" /></td>
+            </tr>
+            <tr>
+                <td style="padding-top: 10px;" align="center" colspan="6"><input style="margin-right: 5px;" type="button" id="Save" value="Save" /><input id="Cancel" type="button" value="Cancel" /></td>
+            </tr>
+        </table>
+    </div>
+</div>

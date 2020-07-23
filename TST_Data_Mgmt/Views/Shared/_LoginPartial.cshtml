@@ -1,0 +1,53 @@
+﻿@using Microsoft.AspNet.Identity
+
+   
+    @if (Request.IsAuthenticated)
+    {
+        using (Html.BeginForm("LogOff", "Login", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+        {
+            @Html.AntiForgeryToken()
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="TST General Ledger Codes">
+                        GL Codes<b class="caret"></b>
+                    </a>
+                    <ul class="dropdown-menu text-muted" style="width: 300px;padding-left: 10px;">
+                        <li><span style="color:lightblue;">1 = Billable</span></li>
+                        <li><span style="color:lightblue;">2 = Contract</span></li>
+                        <li><span style="color:coral;">3 = Non-Billable Warranty</span></li>
+                        <li><span style="color:lightblue;">4 = Manuf Warranty</span></li>
+                        <li><span style="color:coral;">5 = Good Will</span></li>
+                        <li><span style="color:lightblue;">6 = Inspection</span></li>
+                        <li><span style="color:lightblue;">7 = Snow</span></li>
+                        <li>Color Code: <span style="color:lightblue;">Billable</span> / <span style="color:coral;">Non-Billable</span></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    @Html.ActionLink("Hello " + User.Identity.GetUserName() + "!", "Index", "Manage", routeValues: null, htmlAttributes: new { title = "Manage" })
+                </li>
+                <li class="dropdown"><a href="javascript:document.getElementById('logoutForm').submit()">Log off</a></li>
+            </ul>
+        }
+    }
+    else
+    {
+        <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="TST General Ledger Codes">
+                    GL Codes<b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu text-muted" style="width: 300px;padding-left: 10px;">
+                    <li><span style="color:lightblue;">1 = Billable</span></li>
+                        <li><span style="color:lightblue;">2 = Contract</span></li>
+                        <li><span style="color:coral;">3 = Non-Billable Warranty</span></li>
+                        <li><span style="color:lightblue;">4 = Manuf Warranty</span></li>
+                        <li><span style="color:coral;">5 = Good Will</span></li>
+                        <li><span style="color:lightblue;">6 = Inspection</span></li>
+                        <li><span style="color:lightblue;">7 = Snow</span></li>
+                        <li>Color Code: <span style="color:lightblue;">Billable</span> / <span style="color:coral;">Non-Billable</span></li>
+                </ul>
+            </li>
+            <li>@Html.ActionLink("Log in", "Index", "Login", null, new { id = "loginLink" })</li>
+        </ul>
+    }
+                

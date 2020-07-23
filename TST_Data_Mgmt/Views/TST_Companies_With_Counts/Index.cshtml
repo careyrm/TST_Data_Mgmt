@@ -1,0 +1,904 @@
+﻿@model IEnumerable<TST_DataMgmt.Models.TST_Companies_With_Counts>
+
+@{
+    ViewBag.Title = "TST Companies";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $("#detailsHdr").html('<h4 style="text-decoration: underline;">Company Details</h4>');
+
+            var self = this;
+            //set jqwidget theme
+            var theme = "bootstrap";
+            $("#FPNInvoiceDetails").hide();
+            $('#invoicingButtons').hide();
+            $('#btnUpload').hide();
+                       
+
+            function setCompaniesSource() {
+
+                var source = {
+                    dataType: "json",
+                    dataFields: [
+                        { name: 'COMP_ID', type: 'string'  },
+                        { name: 'COMPANY_NAME', type: 'string'  },
+                        { name: 'ACCOUNT_TYPE', type: 'string'  },
+                        { name: 'COMPANY_ID', type: 'string'  },
+                        { name: 'ACCOUNT_REP', type: 'string'  },
+                        { name: 'DATE_CREATED', type: 'date' },
+                        { name: 'DATE_MODIFIED', type: 'date'}
+                    ],
+                    url: '/TST_Companies_With_Counts/GetCompanies'
+                };
+                return source;
+            }           
+
+            function setMASCompaniesSource(COMPANY_ID) {
+                var filterID = { 'COMPANY_ID': COMPANY_ID };
+                var source = {
+                    dataType: "json",
+                    dataFields: [
+                        { name: 'MAS_CUSTOMER_ID' },
+                        { name: 'COMPANY_NAME' },
+                        { name: 'ADDRESS' },
+                        { name: 'ADRESS_2' },
+                        { name: 'CITY' },
+                        { name: 'STATE' },
+                        { name: 'ZIP' },
+                    ],
+                    url: '/TST_Companies_With_Counts/GetMASCompany',
+                    data: filterID
+                };
+                return source;
+            }         
+
+            function setCompanyDetailsSource(COMP_ID) {
+                var filterID = { 'COMP_ID': COMP_ID };
+                var sourceDetails = {
+                    dataType: "json",
+                    dataFields: [
+                        { name: 'COMP_ID' },
+                        { name: 'COMPANY_NAME' },
+                        { name: 'COMPANY_ID'},
+                        { name: 'ADDRESS' },
+                        { name: 'ADRESS_2' },
+                        { name: 'CITY' },
+                        { name: 'STATE' },
+                        { name: 'ZIP' },
+                        { name: 'BILL_ADDRESS' },
+                        { name: 'BILL_ADDRESS_2' },
+                        { name: 'BILL_CITY' },
+                        { name: 'BILL_STATE' },
+                        { name: 'BILL_ZIP' },
+                        { name: 'ACCOUNT_TYPE' },
+                        { name: 'ACCOUNT_REP' },
+                        { name: 'ACCOUNT_REP_ID' },
+                        { name: 'LEAK_COUNT' },
+                        { name: 'CONTRACT_COUNT' },
+                        { name: 'BILLABLE_COUNT' },
+                        { name: 'NONBILLABLE_COUNT' },
+                        { name: 'CANCELLED_COUNT' },
+                        { name: 'TOTAL_INVOICE_COUNT' },
+                        { name: 'DATE_CREATED' },
+                        { name: 'DATE_MODIFIED' }
+                    ],
+                    url: '/TST_Companies_With_Counts/GetCompanyDetails',
+                    data: filterID
+                };
+                return sourceDetails;
+            }
+                       
+            function createCompanyGrid() {
+                //Functions for the companies grid
+                var pagerrendererCompanies = function () {
+                    var element = $("<div style='margin-left: 10px; margin-top: 5px; width: 100%; height: 100%;'></div>");
+                    var datainfo = $("#gridCompanies").jqxGrid('getdatainformation');
+                    var paginginfo = datainfo.paginginformation;
+
+                    var leftButton = $("<div style='padding: 0px; float: left;'><div style='margin-left: 9px; width: 16px; height: 16px;'></div></div>");
+                    leftButton.find('div').addClass('jqx-icon-arrow-left');
+                    leftButton.width(36);
+                    leftButton.jqxButton({ theme: theme });
+
+                    var rightButton = $("<div style='padding: 0px; margin: 0px 3px; float: left;'><div style='margin-left: 9px; width: 16px; height: 16px;'></div></div>");
+                    rightButton.find('div').addClass('jqx-icon-arrow-right');
+                    rightButton.width(36);
+                    rightButton.jqxButton({ theme: theme });
+
+                    leftButton.appendTo(element);
+                    rightButton.appendTo(element);
+
+                    var label = $("<div style='font-size: 11px; margin: 2px 3px; font-weight: bold; float: left;'></div>");
+                    label.text("1-" + paginginfo.pagesize + ' of ' + datainfo.rowscount);
+                    label.appendTo(element);
+                    self.label = label;
+                    // update buttons states.
+                    var handleStates = function (event, button, className, add) {
+                        button.on(event, function () {
+                            if (add == true) {
+                                button.find('div').addClass(className);
+                            }
+                            else button.find('div').removeClass(className);
+                        });
+                    }
+
+                    if (theme != '') {
+                        handleStates('mousedown', rightButton, 'jqx-icon-arrow-right-selected-' + theme, true);
+                        handleStates('mouseup', rightButton, 'jqx-icon-arrow-right-selected-' + theme, false);
+                        handleStates('mousedown', leftButton, 'jqx-icon-arrow-left-selected-' + theme, true);
+                        handleStates('mouseup', leftButton, 'jqx-icon-arrow-left-selected-' + theme, false);
+
+                        handleStates('mouseenter', rightButton, 'jqx-icon-arrow-right-hover-' + theme, true);
+                        handleStates('mouseleave', rightButton, 'jqx-icon-arrow-right-hover-' + theme, false);
+                        handleStates('mouseenter', leftButton, 'jqx-icon-arrow-left-hover-' + theme, true);
+                        handleStates('mouseleave', leftButton, 'jqx-icon-arrow-left-hover-' + theme, false);
+                    }
+
+                    rightButton.click(function () {
+                        $("#gridCompanies").jqxGrid('gotonextpage');
+                    });
+
+                    leftButton.click(function () {
+                        $("#gridCompanies").jqxGrid('gotoprevpage');
+                    });
+
+                    return element;
+                }
+
+                $("#gridCompanies").on('pagechanged', function () {
+                    var datainfo = $("#gridCompanies").jqxGrid('getdatainformation');
+                    var paginginfo = datainfo.paginginformation;
+                    self.label.text(1 + paginginfo.pagenum * paginginfo.pagesize + "-" + Math.min(datainfo.rowscount, (paginginfo.pagenum + 1) * paginginfo.pagesize) + ' of ' + datainfo.rowscount);
+                });
+
+                var srcCompanies = setCompaniesSource();
+                var daCompanies = new $.jqx.dataAdapter(srcCompanies);
+
+                $("#gridCompanies").jqxGrid(
+                    {
+                        width: 580,
+                        height: 680,
+                        pageable: true,
+                        pageSize: 25,
+                        pagerrenderer: pagerrendererCompanies,
+                        filterable: true,
+                        filtermode: 'excel',
+                        source: daCompanies,
+                        autorowheight: false,
+                        autoheight: false,
+                        sortable: true,
+                        showfilterrow: true,
+                        selectionmode: 'singlerow',
+                        editable: false,
+                        altrows: true,
+                        scrollmode: 'logical',
+                        autoshowfiltericon: true,
+                        columnsresize: true,
+                        showstatusbar: false,
+                        showaggregates: false,
+                        showtoolbar: true,
+                        toolbarheight: 40,
+                        columnsheight: 25,
+                        rowsheight: 25,
+                        enabletooltips: true,
+                        enableellipsis: true,
+                        groupable: false,
+                        virtualmode: false,
+                        ready: function () {
+                            // Save State
+                            $('#gridCompanies').jqxGrid('savestate');
+                        },
+                        columns: [
+                            {
+                                text: 'COMP_ID', dataField: 'COMP_ID', width: 10, hidden: true
+                            },
+                            {
+                                text: 'Company Name', dataField: 'COMPANY_NAME', width: 250, filtertype: 'input', cellsalign: 'left',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Company</div>';
+                                }
+                            },
+                            {
+                                text: 'Comp ID', dataField: 'COMPANY_ID', width: 115, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Comp ID</div>';
+                                }
+                            },
+                            {
+                                text: 'Acct Rep', dataField: 'ACCOUNT_REP', width: 115, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Acct Rep</div>';
+                                }
+                            },
+                            {
+                                text: 'Acct Type', dataField: 'ACCOUNT_TYPE', width: 115, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Acct Type</div>';
+                                }
+                            },
+                            {
+                                text: 'Date Created', dataField: 'DATE_CREATED', width: 115, filtertype: 'range', cellsalign: 'center', cellsformat: 'd',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Date Created</div>';
+                                }
+                            },
+                            {
+                                text: 'Date Modified', dataField: 'DATE_MODIFIED', width: 115, filtertype: 'range', cellsalign: 'center', cellsformat: 'd',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Date Modified</div>';
+                                }
+                            }
+                        ],
+                        rendertoolbar: function (statusbar) {
+                            // appends buttons to the status bar.
+                            var container = $("<div style='overflow: hidden; position: relative; margin: 5px;'></div>");
+                            var reloadButton = $("<div style='float: left; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/refresh.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Reload</span></div>");
+                            var gridTipsButton = $("<div style='float: left; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/Information-icon.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Grid Help</span></div>");
+                            var clearFilterButton = $("<div style='float: left; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/filter-delete-icon.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Clear Filter</span></div>");
+                            var csvButton = $("<div style='float: right; margin-left: 5px;'><img style='position: relative; margin-top: 2px;' src='/content/images/csv-icon.png'/><span style='margin-left: 4px; position: relative; top: 3px;'>Export to CSV</span></div>");
+                            
+                            container.append(reloadButton);
+                            container.append(clearFilterButton);
+                            container.append(gridTipsButton);
+                            container.append(csvButton);
+
+                            statusbar.append(container);
+
+                            reloadButton.jqxButton({ width: 75, height: 20 });
+                            clearFilterButton.jqxButton({ width: 110, height: 20 });
+                            gridTipsButton.jqxButton({ width: 110, height: 20 });
+                            csvButton.jqxButton({ width: 125, height: 20 });
+                            
+                            // reload grid data.
+                            reloadButton.click(function (event) {
+                                var sourceReload = setCompaniesSource();
+                                var daReload = new $.jqx.dataAdapter(sourceReload);
+                                $('#gridCompanies').jqxGrid({ source: daReload });
+
+                            });
+
+                            // Clear the filters
+                            clearFilterButton.click(function () {
+                                $("#gridCompanies").jqxGrid('clearfilters');
+                            });
+
+                            //Grid help button
+                            gridTipsButton.click(function () {
+                                $("#gridHelp").jqxWindow('open');
+                            });
+
+                            //export buttons
+                            csvButton.click(function () {
+                                $("#gridCompanies").jqxGrid('exportdata', 'csv', 'TST_Companies_Maintenance_Report');
+                            });
+                        }
+                    });
+
+            }
+
+            function setAccountRepsSource() {
+
+                var source = {
+                    dataType: "json",
+                    dataFields: [
+                        { name: 'EMPLOYEE_ID' },
+                        { name: 'EMPLOYEE' }
+                    ],
+                    url: '/TST_Companies_With_Counts/GetAccountReps'
+                };
+                return source;
+            }
+
+            function setInvoicesSource(COMPANY_ID) {
+                
+                var filterID = { 'COMPANY_ID': COMPANY_ID };
+                var sourceInvoices = {
+                    dataType: "json",
+                    dataFields: [
+                        { name: 'INVOICE_ID' },
+                        { name: 'INVOICE_STATUS' },
+                        { name: 'INVOICE_TYPE' },
+                        { name: 'COMPANY_NAME' },
+                        { name: 'COMPANY_ID' },
+                        { name: 'PROPERTY_NAME' },
+                        { name: 'PROPERTY_CITY' },
+                        { name: 'PROPERTY_STATE' },
+                        { name: 'BILL_TO_ACCOUNT_MANAGER' },
+                        { name: 'INVOICE_TOTAL' },
+                        { name: 'INVOICE_TAX' },
+                        { name: 'INVOICE_BILL_TO_ID' },
+                        { name: 'INVOICE_SENT_DATE' },
+                        { name: 'SENT_TO_MAS_DATE' }
+                    ],
+                    url: '/TST_Companies_With_Counts/GetInvoices',
+                    data: filterID
+                };
+                return sourceInvoices;
+            }
+
+            function createInvoicessGrid(COMPANY_ID) {
+                
+                var srcInvoices = setInvoicesSource(COMPANY_ID);
+                var daInvoices = new $.jqx.dataAdapter(srcInvoices);
+                $("#gridInvoices").jqxGrid(
+                    {
+                        width: 1100,
+                        height: 250,
+                        pageable: true,
+                        pageSize: 5,
+                        pagerrenderer: pagerrendererInvoices,
+                        filterable: true,
+                        filtermode: 'excel',
+                        source: daInvoices,
+                        autorowheight: false,
+                        autoheight: false,
+                        sortable: true,
+                        showfilterrow: false,
+                        selectionmode: 'singlerow',
+                        editable: false,
+                        altrows: true,
+                        scrollmode: 'logical',
+                        autoshowfiltericon: true,
+                        columnsresize: true,
+                        showstatusbar: false,
+                        showaggregates: false,
+                        showtoolbar: false,
+                        columnsheight: 35,
+                        rowsheight: 25,
+                        enabletooltips: true,
+                        enableellipsis: true,
+                        groupable: false,
+                        virtualmode: false,
+                        ready: function () {
+                            // Save State
+                            $('#gridInvoices').jqxGrid('savestate');
+                        },
+                        columns: [
+                           {
+                                text: 'Invoice ID', dataField: 'INVOICE_ID', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice ID</div>';
+                                }
+                            },
+                            {
+                                text: 'Invoice Status', dataField: 'INVOICE_STATUS', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Inv<br>Status</div>';
+                                }
+                            },
+                            {
+                                text: 'Invoice Type', dataField: 'INVOICE_TYPE', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Type</div>';
+                                }
+                            },
+                            {
+                                text: 'Company Name', dataField: 'COMPANY_NAME', width: 200, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Company</div>';
+                                }
+                            },
+                            {
+                                text: 'Company ID', dataField: 'COMPANY_ID', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Company ID</div>';
+                                }
+                            },
+                            {
+                                text: 'Property', dataField: 'PROPERTY_NAME', width: 200, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Property</div>';
+                                }
+                            },
+                            {
+                                text: 'Property City', dataField: 'PROPERTY_CITY', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Property<br>City</div>';
+                                }
+                            },
+                            {
+                                text: 'Property State', dataField: 'PROPERTY_STATE', width: 80, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Property<br>State</div>';
+                                }
+                            },
+                            {
+                                text: 'Acct Mgr', dataField: 'BILL_TO_ACCOUNT_MANAGER', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Acct Mgr</div>';
+                                }
+                            },
+                            {
+                                text: 'Invoice Total', dataField: 'INVOICE_TOTAL', width: 100, filtertype: 'input', cellsalign: 'center', cellsformat: 'c2',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Total</div>';
+                                }
+                            },
+                            {
+                                text: 'Invoice Tax', dataField: 'INVOICE_TAX', width: 100, filtertype: 'input', cellsalign: 'center', cellsformat: 'c2',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Tax</div>';
+                                }
+                            },
+                            {
+                                text: 'Bill To ID', dataField: 'INVOICE_BILL_TO_ID', width: 80, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Bill<br>To ID</div>';
+                                }
+                            },
+                            {
+                                text: 'Invoice Date', dataField: 'INVOICE_SENT_DATE', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Invoice<br>Date</div>';
+                                }
+                            },
+                            {
+                                text: 'Sent To MAS Date', dataField: 'SENT_TO_MAS_DATE', width: 100, filtertype: 'input', cellsalign: 'center',
+                                renderer: function (defaultText, alignment, height) {
+                                    return '<div style="text-align: center;margin: 3px 0 0 3px;">Sent To<br>MAS Date</div>';
+                                }
+                            }
+                        ]
+                    });
+            }
+
+            function createCompanyDetailsForm(COMP_ID, COMPANY_ID) {
+                //alert(COMP_ID);
+                var srcCompanyDetails = setCompanyDetailsSource(COMP_ID);
+                var daCompanyDetails = new $.jqx.dataAdapter(srcCompanyDetails, {
+                    loadComplete: function () {
+
+                        var records = daCompanyDetails.records;
+                        var detailsRecord = records[0];
+                        var length = records.length;
+                        var hdrTxt = "<h2  style='text-decoration: underline;'>Details for: " + detailsRecord.COMPANY_NAME + "</h2>";
+                        $("#hdrCompanyDetails").html(hdrTxt);
+                        $('#hdnCOMP_ID').val(detailsRecord.COMP_ID);
+                        $("#hdnAction").val('Edit');
+                        
+                        //set textbox inputs
+                        $("#COMPANY_ID").val(detailsRecord.COMPANY_ID);
+                        $("#COMPANY_NAME").val(detailsRecord.COMPANY_NAME);
+                        $("#ADDRESS").val(detailsRecord.ADDRESS);
+                        $("#ADDRESS_2").val(detailsRecord.ADDRESS_2);
+                        $("#CITY").val(detailsRecord.CITY);
+                        $("#STATE").val(detailsRecord.STATE);
+                        $("#ZIP").val(detailsRecord.ZIP);
+                        $("#BILL_ADDRESS").val(detailsRecord.BILL_ADDRESS);
+                        $("#BILL_ADDRESS_2").val(detailsRecord.BILL_ADDRESS_2);
+                        $("#BILL_CITY").val(detailsRecord.BILL_CITY);
+                        $("#BILL_STATE").val(detailsRecord.BILL_STATE);
+                        $("#BILL_ZIP").val(detailsRecord.BILL_ZIP);
+                        $("#LEAK_COUNT").val(detailsRecord.LEAK_COUNT);
+                        $("#CONTRACT_COUNT").val(detailsRecord.CONTRACT_COUNT);
+                        $("#BILLABLE_COUNT").val(detailsRecord.BILLABLE_COUNT);
+                        $("#NONBILLABLE_COUNT").val(detailsRecord.NONBILLABLE_COUNT);
+                        $("#CANCELLED_COUNT").val(detailsRecord.CANCELLED_COUNT);
+                        $("#TOTAL_INVOICE_COUNT").val(detailsRecord.TOTAL_INVOICE_COUNT);
+
+                        //set date inputs
+                        $("#DATE_CREATED").jqxDateTimeInput('val', detailsRecord.DATE_CREATED);
+                        $("#DATE_MODIFIED").jqxDateTimeInput('val',detailsRecord.DATE_MODIFIED);
+
+                        //set dropdownlist inputs
+                        $("#ACCOUNT_TYPE").jqxDropDownList('val', detailsRecord.ACCOUNT_TYPE);
+                        $("#ACCOUNT_REP").jqxDropDownList('val', detailsRecord.ACCOUNT_REP_ID);
+                       
+
+                    }
+                });
+                daCompanyDetails.dataBind();
+
+                var srcMASCompanyDetails = setMASCompaniesSource(COMPANY_ID);
+                var daMASCompanyDetails = new $.jqx.dataAdapter(srcMASCompanyDetails, {
+                    loadComplete: function () {
+
+                        var MASrecords = daMASCompanyDetails.records;
+                        var MASdetailsRecord = MASrecords[0];
+                        var MASlength = MASrecords.length;
+                        //alert(MASlength);
+
+                        //set textbox inputs
+                        if (MASlength == 0) {
+                            $("#MAS_COMPANY_NAME").val('No Matching MAS Record');
+                            $("#MAS_CUSTOMER_ID").val('');
+                            $("#MAS_ADDRESS").val('');
+                            $("#MAS_ADDRESS_2").val('');
+                            $("#MAS_CITY").val('');
+                            $("#MAS_STATE").val('');
+                            $("#MAS_ZIP").val('');
+                        }
+                        else {
+                            $("#MAS_COMPANY_NAME").val(MASdetailsRecord.COMPANY_NAME);
+                            $("#MAS_CUSTOMER_ID").val(MASdetailsRecord.MAS_CUSTOMER_ID);
+                            $("#MAS_ADDRESS").val(MASdetailsRecord.ADDRESS);
+                            $("#MAS_ADDRESS_2").val(MASdetailsRecord.ADDRESS_2);
+                            $("#MAS_CITY").val(MASdetailsRecord.CITY);
+                            $("#MAS_STATE").val(MASdetailsRecord.STATE);
+                            $("#MAS_ZIP").val(MASdetailsRecord.ZIP);
+                        }
+                       
+                       
+                    }
+                });
+                daMASCompanyDetails.dataBind();
+            }
+           
+
+            function addEditCompanySource(COMP_ID, frmAction) {
+                var repobj = $("#ACCOUNT_REP").jqxDropDownList('getSelectedItem'); 
+                var repname = repobj.label;
+                
+                var addEditData = {
+                    'COMP_ID': COMP_ID,
+                    'COMPANY_NAME': $('#COMPANY_NAME').val(),
+                    'COMPANY_ID': $('#COMPANY_ID').val(),
+                    'ACCOUNT_TYPE': $('#ACCOUNT_TYPE').val(),
+                    'ACCOUNT_REP': repname,
+                    'ACCOUNT_REP_ID': $('#ACCOUNT_REP').val(),
+                    'ADDRESS': $('#ADDRESS').val(),
+                    'ADDRESS_2': $('#ADDRESS_2').val(),
+                    'CITY': $('#CITY').val(),
+                    'STATE': $('#STATE').val(),
+                    'ZIP': $('#ZIP').val(),
+                    'BILL_ADDRESS': $('#BILL_ADDRESS').val(),
+                    'BILL_ADDRESS_2': $('#BILL_ADDRESS_2').val(),
+                    'BILL_CITY': $('#BILL_CITY').val(),
+                    'BILL_STATE': $('#BILL_STATE').val(),
+                    'BILL_ZIP': $('#BILL_ZIP').val(),
+                    'frmAction': frmAction
+                };
+                
+                var sourceAddEditCompany = {
+                    dataType: "json",
+                    dataFields: [
+                        { name: 'COMP_ID' },
+                        { name: 'ACTION_RESULTS' }
+                    ],
+                    url: '/TST_Companies_With_Counts/AddEditCompany',
+                    data: addEditData
+                };
+                return sourceAddEditCompany;
+            }
+
+            
+            //Get the values for the Invoicing Status dropdown
+            var ddlDataAccountTypes = { 'OptionType': 'ACCOUNT_TYPE' };
+            var ddlSourceAccountTypes = {
+                dataType: "json",
+                dataFields: [
+                    { name: 'OptionText', type: 'string' },
+                    { name: 'OptionValue', type: 'string' }
+                ],
+                url: '/TST_OPTIONS/GetOptions',
+                data: ddlDataAccountTypes
+            };
+            var daAccountTypes = new $.jqx.dataAdapter(ddlSourceAccountTypes);
+
+            var ddlAccountRepsSrc = setAccountRepsSource();
+            var daAccountReps = new $.jqx.dataAdapter(ddlAccountRepsSrc);
+
+           
+            $('#gridCompanies').on('rowdoubleclick', function (event) {
+
+
+                var row = event.args.rowindex;
+                var dataRecord = $("#gridCompanies").jqxGrid('getrowdata', row);
+                var COMP_ID = dataRecord['COMP_ID'];
+                var COMPANY_ID = dataRecord['COMPANY_ID'];
+
+                createCompanyDetailsForm(COMP_ID, COMPANY_ID);
+                createInvoicessGrid(COMPANY_ID);
+            });
+
+            createCompanyGrid();
+            
+            $("#btnSave").on('click', function () {
+                var actionval = $("#hdnAction").val();
+                //alert(actionval);
+                if (actionval == "New") {
+                    //save a new Company record
+                    var addEditSource = addEditCompanySource(0,"Add");
+                    var daAddEdit = new $.jqx.dataAdapter(addEditSource, {
+                        loadComplete: function () {
+                            // get data records.
+                            var records = daAddEdit.records[0];
+                            if (records.ACTION_RESULTS.toLowerCase() == "true") {
+                                alert("SUCCESS: Adding the new company was successful.");
+                            }
+                            else {
+                                alert("ERROR: Adding the new company failed!");
+                             }
+
+                        }
+                    });
+                    daAddEdit.dataBind();
+                }
+                else {
+                    //save changes to an existing FPN invoice record.
+                    //save a new FPN invoice record
+                    var COMP_ID = $('#hdnCOMP_ID').val();
+                    
+                    //alert('Save Button Clicked for Comp ID: ' + COMP_ID.toString());
+                    var editSource = addEditCompanySource(COMP_ID, "Edit");
+                    var daEdit = new $.jqx.dataAdapter(editSource, {
+                        loadComplete: function () {
+                            // get data records.
+                            var records = daEdit.records[0];
+
+                            if (records.ACTION_RESULTS.toLowerCase() == "true") {
+                                alert("SUCCESS: Editing the company was successful.");
+                                $('#gridCompanies').jqxGrid('updatebounddata');
+                                $('#gridCompanies').jqxGrid('refreshdata');
+                            }
+                            else {
+                                alert("ERROR: Editing the company failed!");
+                            }
+
+                        }
+                    });
+                    daEdit.dataBind();
+
+                }
+
+                
+            });
+
+
+            //initialize the buttons
+            $("#btnSave").jqxButton({ theme: theme, width: '150', height: '25' });
+            
+            // initialize the input fields.
+            $("#COMPANY_NAME").jqxInput({ theme: theme, width: "500px", height: "23px", disabled: false });
+            $("#COMPANY_ID").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: false });
+            $("#ADDRESS").jqxInput({ theme: theme, width: "400px", height: "23px", disabled: false });
+            $("#ADDRESS_2").jqxInput({ theme: theme, width: "400px", height: "23px", disabled: false });
+            $("#CITY").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: false });
+            $("#STATE").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: false });
+            $("#ZIP").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: false });
+            $("#BILL_ADDRESS").jqxInput({ theme: theme, width: "400px", height: "23px", disabled: false });
+            $("#BILL_ADDRESS_2").jqxInput({ theme: theme, width: "400px", height: "23px", disabled: false });
+            $("#BILL_CITY").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: false });
+            $("#BILL_STATE").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: false });
+            $("#BILL_ZIP").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: false });
+            $("#LEAK_COUNT").jqxInput({ theme: theme, width: "100px", height: "23px", disabled: true });
+            $("#CONTRACT_COUNT").jqxInput({ theme: theme, width: "100px", height: "23px", disabled: true });
+            $("#BILLABLE_COUNT").jqxInput({ theme: theme, width: "100px", height: "23px", disabled: true });
+            $("#NONBILLABLE_COUNT").jqxInput({ theme: theme, width: "100px", height: "23px", disabled: true });
+            $("#CANCELLED_COUNT").jqxInput({ theme: theme, width: "100px", height: "23px", disabled: true });
+            $("#TOTAL_INVOICE_COUNT").jqxInput({ theme: theme, width: "100px", height: "23px", disabled: true });
+            $("#MAS_COMPANY_NAME").jqxInput({ theme: theme, width: "500px", height: "23px", disabled: true });
+            $("#MAS_CUSTOMER_ID").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: true });
+            $("#MAS_ADDRESS").jqxInput({ theme: theme, width: "400px", height: "23px", disabled: true });
+            $("#MAS_ADDRESS_2").jqxInput({ theme: theme, width: "400px", height: "23px", disabled: true });
+            $("#MAS_CITY").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: true });
+            $("#MAS_STATE").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: true });
+            $("#MAS_ZIP").jqxInput({ theme: theme, width: "200px", height: "23px", disabled: true });
+
+            //set date inputes
+            $("#DATE_CREATED").jqxDateTimeInput({ theme: theme, width: "200px", height: "23px", disabled: true });
+            $("#DATE_MODIFIED").jqxDateTimeInput({ theme: theme, width: "200px", height: "23px", disabled: true });
+
+            //set dropdownlist inputs
+            $("#ACCOUNT_TYPE").jqxDropDownList({ source: daAccountTypes, selectedIndex: 0, width: '200px', height: '23px', theme: theme, displayMember: 'OptionText', valueMember: 'OptionText' });
+            $("#ACCOUNT_REP").jqxDropDownList({ source: daAccountReps, selectedIndex: 0, width: '200px', height: '23px', theme: theme, displayMember: 'EMPLOYEE', valueMember: 'EMPLOYEE_ID' });
+                        
+            //initialize the popup window for grid help
+            $("#gridHelp").jqxWindow({ height: 800, width: 1100, theme: theme, isModal: true, autoOpen: false });
+
+            //Functions for the Invoices grid
+            var pagerrendererInvoices = function () {
+                var element = $("<div style='margin-left: 10px; margin-top: 5px; width: 100%; height: 100%;'></div>");
+                var datainfo = $("#gridInvoices").jqxGrid('getdatainformation');
+                var paginginfo = datainfo.paginginformation;
+
+                var leftButton = $("<div style='padding: 0px; float: left;'><div style='margin-left: 9px; width: 16px; height: 16px;'></div></div>");
+                leftButton.find('div').addClass('jqx-icon-arrow-left');
+                leftButton.width(36);
+                leftButton.jqxButton({ theme: theme });
+
+                var rightButton = $("<div style='padding: 0px; margin: 0px 3px; float: left;'><div style='margin-left: 9px; width: 16px; height: 16px;'></div></div>");
+                rightButton.find('div').addClass('jqx-icon-arrow-right');
+                rightButton.width(36);
+                rightButton.jqxButton({ theme: theme });
+
+                leftButton.appendTo(element);
+                rightButton.appendTo(element);
+
+                var label = $("<div style='font-size: 11px; margin: 2px 3px; font-weight: bold; float: left;'></div>");
+                label.text("1-" + paginginfo.pagesize + ' of ' + datainfo.rowscount);
+                label.appendTo(element);
+
+                self.label = label;
+                // update buttons states.
+                var handleStates = function (event, button, className, add) {
+                    button.on(event, function () {
+                        if (add == true) {
+                            button.find('div').addClass(className);
+                        }
+                        else button.find('div').removeClass(className);
+                    });
+                }
+
+                if (theme != '') {
+                    handleStates('mousedown', rightButton, 'jqx-icon-arrow-right-selected-' + theme, true);
+                    handleStates('mouseup', rightButton, 'jqx-icon-arrow-right-selected-' + theme, false);
+                    handleStates('mousedown', leftButton, 'jqx-icon-arrow-left-selected-' + theme, true);
+                    handleStates('mouseup', leftButton, 'jqx-icon-arrow-left-selected-' + theme, false);
+
+                    handleStates('mouseenter', rightButton, 'jqx-icon-arrow-right-hover-' + theme, true);
+                    handleStates('mouseleave', rightButton, 'jqx-icon-arrow-right-hover-' + theme, false);
+                    handleStates('mouseenter', leftButton, 'jqx-icon-arrow-left-hover-' + theme, true);
+                    handleStates('mouseleave', leftButton, 'jqx-icon-arrow-left-hover-' + theme, false);
+                }
+
+                rightButton.click(function () {
+                    $("#gridInvoices").jqxGrid('gotonextpage');
+                });
+
+                leftButton.click(function () {
+                    $("#gridInvoices").jqxGrid('gotoprevpage');
+                });
+
+                return element;
+            }
+        });
+
+        
+    </script>
+}
+
+<h2>TST Companies</h2>
+<div class="col-md-5">
+    <p class="text-muted">
+        Search for a specific TST Company. Double click on the company to select it.<br />Date fitlers are ranges, select start then end dates.
+        <div>
+            <div id='gridCompanies'></div>
+        </div>
+
+        <div style="margin-top: 10px; font-size: 13px; font-family: Verdana;" id="log"></div>
+    </p>
+    <div class="clearfix"></div>
+</div>
+<div class="col-md-7" id="companyDetails">
+    <div style='width: 1200px;' id='detailsButtons'>
+        <div class="row">
+            <div id="hdrCompanyDetails" class="col-md-8"></div>
+            <div class="col-md-4">
+                <input type="button" value="Save" id='btnSave' class="btn btn-primary" style="padding-bottom: 25px;" />
+                <input type="hidden" id="hdnAction" />
+                <input type="hidden" id="hdnCOMP_ID" />
+            </div>
+        </div>
+    </div>
+    <div id="detailsHdr">
+    </div>
+    <div style="overflow: hidden;">
+        <table cellpadding="3" cellspacing="3">
+            <tr>
+                <td align="right">Company Name:</td>
+                <td align="left" colspan="5"><input id="COMPANY_NAME" width="500" /></td>
+            </tr>
+            <tr>
+                <td align="right">Date Created:</td>
+                <td align="left"><input id="DATE_CREATED" type="date" /></td>
+                <td align="right">Date Modified:</td>
+                <td align="left" colspan="3"><input id="DATE_MODIFIED" type="date" /></td>
+            </tr>
+            <tr>
+                <td align="right">Company ID:</td>
+                <td align="left"><input id="COMPANY_ID" /></td>
+                <td align="right">Account Rep:</td>
+                <td align="left"><div id="ACCOUNT_REP"></div></td>
+                <td align="right">Account Type:</td>
+                <td align="left"><div id="ACCOUNT_TYPE"></div></td>
+            </tr>
+            <tr>
+                <td align="right">Address:</td>
+                <td align="left" colspan="5"><input id="ADDRESS" /></td>
+            </tr>
+            <tr>
+                <td align="right">Address 2:</td>
+                <td align="left" colspan="5"><input id="ADDRESS_2" /></td>
+            </tr>
+            <tr>
+                <td align="right">City:</td>
+                <td align="left"><input id="CITY" /></td>
+                <td align="right">State:</td>
+                <td align="left"><input id="STATE" /></td>
+                <td align="right">Zip:</td>
+                <td align="left"><input id="ZIP" /></td>
+            </tr>
+            <tr>
+                <td align="right">Bill Address:</td>
+                <td align="left" colspan="5"><input id="BILL_ADDRESS" /></td>
+            </tr>
+            <tr>
+                <td align="right">Bill Address 2:</td>
+                <td align="left" colspan="5"><input id="BILL_ADDRESS_2" /></td>
+            </tr>
+            <tr>
+                <td align="right">Bill City:</td>
+                <td align="left"><input id="BILL_CITY" /></td>
+                <td align="right">Bill State:</td>
+                <td align="left"><input id="BILL_STATE" /></td>
+                <td align="right">Bill Zip:</td>
+                <td align="left"><input id="BILL_ZIP" /></td>
+            </tr>
+            <tr>
+                <td colspan="6"><h4 style="text-decoration: underline;">Company Invoice Counts</h4></td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <table cellpadding="1" cellspacing="1">
+                        <tr>
+                            <td align="right">Leak Inv Count:</td>
+                            <td align="left"><input id="LEAK_COUNT" readonly /></td>
+                            <td align="right">Contract Inv Count:</td>
+                            <td align="left"><input id="CONTRACT_COUNT" readonly /></td>
+                            <td align="right">Billable Inv Count:</td>
+                            <td align="left"><input id="BILLABLE_COUNT" readonly /></td>
+                        </tr>
+                        <tr>
+                            <td align="right">Non-Billable Inv Count:</td>
+                            <td align="left"><input id="NONBILLABLE_COUNT" readonly /></td>
+                            <td align="right">Cancelled Inv Count:</td>
+                            <td align="left"><input id="CANCELLED_COUNT" readonly /></td>
+                            <td align="right">Total All Inv Count:</td>
+                            <td align="left"><input id="TOTAL_INVOICE_COUNT" readonly /></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6"><h4 style="text-decoration: underline;">MAS Company Details</h4></td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <table cellpadding="1" cellspacing="1">
+                        <tr>
+                            <td align="right">MAS Company Name:</td>
+                            <td align="left" colspan="3"><input id="MAS_COMPANY_NAME" width="500" /></td>
+                            <td align="right">MAS Customer ID:</td>
+                            <td align="left"><input id="MAS_CUSTOMER_ID" /></td>
+
+                        </tr>
+                        <tr>
+                            <td align="right">MAS Address:</td>
+                            <td align="left" colspan="5"><input id="MAS_ADDRESS" /></td>
+                        </tr>
+                        <tr>
+                            <td align="right">MAS Address 2:</td>
+                            <td align="left" colspan="5"><input id="MAS_ADDRESS_2" /></td>
+                        </tr>
+                        <tr>
+                            <td align="right">MAS City:</td>
+                            <td align="left"><input id="MAS_CITY" /></td>
+                            <td align="right">MAS State:</td>
+                            <td align="left"><input id="MAS_STATE" /></td>
+                            <td align="right">MAS Zip:</td>
+                            <td align="left"><input id="MAS_ZIP" /></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <br /><br />
+        <div class="h3">Invoices</div>
+        <div id="gridInvoices"></div>
+
+    </div>
+    
+
+</div>
+<div id="gridHelp">
+    <div>Grid Help</div>
+    <div>
+        <iframe src="~/Docs/GridTips.html" height="800" width="1000" frameborder="0"></iframe>
+    </div>
+</div>
+
+
