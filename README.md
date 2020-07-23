@@ -1,1 +1,1 @@
-# TST_Data_Mgmt
+# This is just a sample of a website that I created to manage data that is imported from a third-party service provider. I used entity framework, C#,SQL Server, and jqwidgets (for the grid displays). The sample codes includes displaying a SSRS report and a html file in the help docs area. 
